@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stabil Admin Paneli</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body {margin:0; font-family:'Roboto',sans-serif; background:#1f2a38; color:#e0e0e0; min-height:100vh; padding:30px; display:flex; justify-content:center;}
+.panel-wrapper {width:95%; max-width:1200px; display:grid; grid-template-columns: 1fr 1fr; gap:20px;}
+.panel {background:#222f3e; border-radius:15px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:0.3s;}
+.panel:hover {transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.6);}
+.panel h2 {margin-top:0; margin-bottom:15px; color:#ffcc00; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;}
+input, select {width:100%; padding:10px; margin:6px 0; border-radius:10px; border:none; background:#1a2b3a; color:#fff;}
+input:focus, select:focus {outline:none; box-shadow:0 0 10px #ffcc00;}
+button {padding:10px 18px; border:none; border-radius:12px; font-weight:500; cursor:pointer; transition:0.3s; margin-top:8px;}
+button:hover {opacity:0.85;}
+#createUserBtn {background:#27ae60; color:#fff;}
+.bulkBtn {background:#3498db; color:#fff; margin-right:5px;}
+#bulkDeleteBtn {background:#e74c3c; color:#fff;}
+.delete {background:#e74c3c; color:#fff; margin-right:5px;}
+.soft-delete {background:#7f8c8d; color:#fff; margin-right:5px;}
+.soft-delete:hover {background:#95a5a6;}
+.edit {background:#9b59b6; color:#fff;}
+table {width:100%; border-collapse:collapse; margin-top:10px;}
+th, td {padding:12px; text-align:left; background:#1a2b3a; border-bottom:1px solid rgba(255,255,255,0.15); transition:0.2s;}
+th {background:#2c3e50; color:#ffcc00; text-transform:uppercase;}
+tr:hover {background: rgba(52,152,219,0.2);}
+header {grid-column: span 2; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;}
+header h1 {color:#ffcc00; margin:0; font-size:2rem;}
+header button {background:#e67e22; color:#fff;}
+#createMsg, #bulkMsg, #searchMsg, #devriyeMsg {margin-top:8px; color:#2ecc71; font-weight:500;}
+.modal {display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center;}
+.modal-content {background:#1f2a38; padding:20px; border-radius:12px; width:320px; display:flex; flex-direction:column; gap:10px;}
+.modal-content input {margin:0;}
+.modal-content button {margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="panel-wrapper">
+
+<header>
+  <h1>STABIL ADMIN PANELİ</h1>
+  <div>
+  <div style="max-width:320px;margin:25px auto;">
+  <select id="siteSelect" style="
+    width:100%;
+    padding:12px;
+    border-radius:14px;
+    background:#1b2838;
+    color:#fff;
+    border:2px solid #ffd700;
+    font-weight:700;
+  ">
+    <option value="">Site Seçiniz</option>
+  </select>
+</div>
+
+  <button id="aktifNobetBtn" style="background:#f1c40f; color:#000;">AKTİF NÖBETLER</button>
+  <button id="devriyeKontrolBtn" style="background:#34495e; color:#fff;">DEVRİYE KONTROL</button>
+  <button id="sinyalBtn" style="background:#6c5ce7; color:#fff;">SİNYAL KONTROL</button>
+  <button id="nobetKontrolBtn" style="background:#c0392b; color:#fff;">NÖBET KONTROL</button>
+  <button id="depoBtn" style="background:#16a085; color:#fff;">DEPO</button>
+    <button id="noktaBtn" style="background:#8e44ad; color:#fff; margin-right:10px;">NOKTA EKLE</button>
+    <button id="devriyeBtn" style="background:#2980b9; color:#fff; margin-right:10px;">DEVRIYE EKLE</button>
+    <button id="logoutBtn" style="margin-right:10px;">ÇIKIŞ</button>
+	<button id="siteAyarBtn" class="admin-btn">⚙️ Site Ayarları</button>
+  </div>
+</header>
+
+
+<div class="panel">
+<h2>YENİ KULLANICI OLUŞTUR</h2>
+<select id="newType">
+  <option value="resident">SITE SAKİNİ</option>
+  <option value="security">GÜVENLİK</option>
+  <option value="admin">ADMIN</option>
+  <option value="company">ŞİRKET</option> </select>
+
+
+<div id="residentFields">
+  <select id="newBlock">
+    <option value="">BLOK SEÇ (OPSİYONEL)</option>
+    <option value="A">A</option>
+    <option value="B">B</option>
+    <option value="C">C</option>
+    <option value="D">D</option>
+    <option value="E">E</option>
+    <option value="F">F</option>
+    <option value="G">G</option>
+    <option value="H">H</option>
+    <option value="I">I</option>
+  </select>
+  <input type="text" id="newSite" placeholder="Site / Apartman Adı (Opsiyonel)">
+  <input type="text" id="newApartment" placeholder="Daire Numarası / Kullanıcı Adı">
+  <input type="text" id="newPhone" placeholder="Telefon">
+</div>
+
+<div id="otherFields">
+  <input type="text" id="newUsername" placeholder="Kullanıcı Adı">
+  <input type="text" id="newPhoneOther" placeholder="Telefon">
+</div>
+
+<button id="createUserBtn">OLUŞTUR</button>
+<div id="createMsg"></div>
+</div>
+
+<div class="panel">
+<h2>TOPLU SITE SAKİN İŞLEMLERİ</h2>
+<select id="bulkBlock">
+  <option value="">BLOK SEÇ (OPSİYONEL)</option>
+  <option value="A">A</option>
+  <option value="B">B</option>
+  <option value="C">C</option>
+  <option value="D">D</option>
+  <option value="E">E</option>
+  <option value="F">F</option>
+  <option value="G">G</option>
+  <option value="H">H</option>
+  <option value="I">I</option>
+</select>
+<input type="text" id="bulkSite" placeholder="Site / Apartman Adı (Opsiyonel)">
+<div>
+<button class="bulkBtn" data-count="50">50 EKLE</button>
+<button class="bulkBtn" data-count="100">100 EKLE</button>
+<button class="bulkBtn" data-count="150">150 EKLE</button>
+<button class="bulkBtn" data-count="200">200 EKLE</button>
+<button class="bulkBtn" data-count="250">250 EKLE</button>
+<button class="bulkBtn" data-count="300">300 EKLE</button>
+<button id="bulkDeleteBtn">TOPLU SİL</button>
+</div>
+<div id="bulkMsg"></div>
+</div>
+
+<div class="panel">
+<h2>KULLANICI ARA</h2>
+<input type="text" id="searchInput" placeholder="Daire Numarası veya Kullanıcı Adı">
+<button id="searchBtn">ARA</button>
+<div id="searchMsg"></div>
+</div>
+
+<div class="panel" style="grid-column: span 2;">
+<h2>TÜM KULLANICILAR</h2>
+<div id="userSummary" style="
+  margin:15px; 
+  padding:10px; 
+  background:#2c3e50;  /* koyu mavi */
+  color:#ffcc00;        /* sarı yazı */
+  border-radius:8px; 
+  font-weight:600;
+  font-size:16px;
+">
+  Yükleniyor...
+</div>
+
+
+<select id="userFilter" style="margin-bottom:10px;">
+<option value="all">TÜMÜ</option>
+<option value="security">GÜVENLİK</option>
+<option value="resident">SITE SAKİNİ</option>
+<option value="admin">ADMIN</option>
+</select>
+<table>
+<thead>
+<tr><th>Daire Numarası</th><th>Blok / Site</th><th>Tip</th><th>Şifre</th><th>Telefon</th><th>İşlem</th></tr>
+</thead>
+<tbody id="usersTable"></tbody>
+</table>
+</div>
+
+<div class="panel">
+<h2>DEVRIYE İŞLEMLERİ</h2>
+<button id="resetDevriyeBtn">SIFIRLA</button>
+<button id="exportDevriyeBtn">DIŞA AKTAR</button>
+<div id="devriyeMsg"></div>
+</div>
+
+</div>
+
+<div id="editModal" class="modal">
+<div class="modal-content">
+<h3>DÜZENLE</h3>
+<label>Kullanıcı Adı</label>
+<input type="text" id="editApartment">
+<label>Şifre</label>
+<input type="text" id="editPassword">
+<label>Telefon</label>
+<input type="text" id="editPhone">
+<button id="saveEditBtn">KAYDET</button>
+<button id="closeEditBtn">KAPAT</button>
+</div>
+</div>
+<script>
+(function(){
+  if (sessionStorage.getItem("adminAuth") !== "true") {
+    alert("Yetkisiz erişim");
+    window.location.href = "index.html";
+  }
+})();
+</script>
+<script type="module">
+(function checkAdmin(){
+  const isAdmin = sessionStorage.getItem("adminAuth");
+  if(isAdmin !== "true"){
+    alert("Yetkisiz erişim");
+    window.location.href = "index.html";
+  }
+})();
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getDatabase, ref, set, remove, onValue, get, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+// 🔵 MERKEZ FIREBASE
+const merkezConfig = {
+   apiKey: "AIzaSyAM5NHBpRHIlttNXwJ9YKDypR4eoyQbDeM",
+  authDomain: "kolartguvenlik-e002d.firebaseapp.com",
+  databaseURL: "https://kolartguvenlik-e002d-default-rtdb.firebaseio.com",
+  projectId: "kolartguvenlik-e002d",
+  storageBucket: "kolartguvenlik-e002d.firebasestorage.app",
+  messagingSenderId: "212955174898",
+  appId: "1:212955174898:web:f77501991c1648fb66bd6b",
+  measurementId: "G-TCGDNDYY6Y"
+};
+
+const merkezApp = initializeApp(merkezConfig, "merkez");
+const merkezDB = getDatabase(merkezApp);
+// 🔥 SADECE BU ÇAĞRI
+
+const siteSelect = document.getElementById("siteSelect");
+
+
+onValue(ref(merkezDB, "sites"), snap => {
+  siteSelect.innerHTML = `<option value="">Site Seçiniz</option>`;
+  const val = snap.val();
+  if(!val) return;
+
+  for(const siteId in val){
+    const opt = document.createElement("option");
+    opt.value = siteId;
+    opt.textContent = val[siteId].siteName;
+    siteSelect.appendChild(opt);
+  }
+});
+let app = null;
+let db = null;
+
+siteSelect.addEventListener("change", async () => {
+  const siteId = siteSelect.value;
+  if(!siteId) return;
+
+  const snap = await get(ref(merkezDB, `sites/${siteId}/config`));
+  if(!snap.exists()){
+    alert("Site Firebase bilgisi bulunamadı!");
+    return;
+  }
+
+  const config = snap.val();
+
+  app = initializeApp(config, siteId);
+  db = getDatabase(app);
+ listUsers();
+  // 🔥 VERİLERİ YÜKLE
+});
+siteSelect.addEventListener("change", () => {
+  sessionStorage.setItem("selectedSite", siteSelect.value);
+});
+
+const lastSite = sessionStorage.getItem("selectedSite");
+if(lastSite){
+  siteSelect.value = lastSite;
+  siteSelect.dispatchEvent(new Event("change"));
+}
+
+
+function goToPage(pageUrl){
+  const siteId = siteSelect.value;
+  if(!siteId){ 
+    alert("Lütfen bir site seçin!"); 
+    return; 
+  }
+  sessionStorage.setItem('selectedSite', siteId);
+  window.location.href = pageUrl;
+}
+
+document.getElementById('aktifNobetBtn').addEventListener('click', () => goToPage('aktifnöbetk.html'));
+document.getElementById('devriyeKontrolBtn').addEventListener('click', () => goToPage('devriyek.html'));
+document.getElementById('nobetKontrolBtn').addEventListener('click', () => goToPage('nöbetk.html'));
+document.getElementById('depoBtn').addEventListener('click', () => goToPage('panel.html'));
+document.getElementById('noktaBtn').addEventListener('click', () => goToPage('nokta.html'));
+document.getElementById('devriyeBtn').addEventListener('click', () => goToPage('devriye.html'));
+document.getElementById("siteAyarBtn").addEventListener("click", () => goToPage('sayar.html'));
+
+
+// ✅ NOKTA EKLE Butonuna tıklama
+
+
+const usersTable = document.getElementById('usersTable');
+let allUsers = {};
+
+function mapType(type) {
+  if (type === "resident") return "SITE SAKİNİ";
+  if (type === "security") return "GÜVENLİK";
+  if (type === "admin") return "ADMIN";
+  return type;
+}
+
+let usersListener = null;
+// Kullanıcıları listele ve canlı dinle
+async function listUsers(filter = "all") {
+  if (!db) return;
+
+  const usersRef = ref(db, 'users');
+
+  // eski listener varsa kapat
+  if (usersListener) usersListener();
+
+  // 1️⃣ ANINDA YÜKLE
+  const snapshot = await get(usersRef);
+  renderUsers(snapshot.val() || {}, filter);
+
+  // 2️⃣ CANLI DİNLE
+  usersListener = onValue(usersRef, snap => {
+    renderUsers(snap.val() || {}, filter);
+  });
+}
+
+// Render fonksiyonu
+function renderUsers(val, filter) {
+  allUsers = val;
+  usersTable.innerHTML = "";
+
+  let sakiniCount = 0, guvenlikCount = 0, amirCount = 0;
+
+  Object.values(val)
+.filter(u => {
+    const isDeleted = (u.isActive === false); 
+    return !isDeleted && (filter === "all" || u.type === filter);
+})
+    .sort((a,b) => {
+      const numA = parseInt((a.username||"").replace(/\D/g,'')||0);
+      const numB = parseInt((b.username||"").replace(/\D/g,'')||0);
+      return numA - numB;
+    })
+    .forEach(u => {
+      if(u.type === "resident") sakiniCount++;
+      else if(u.type === "security") guvenlikCount++;
+      else if(u.type === "admin") amirCount++;
+
+      const tr = document.createElement('tr');
+      const displayBlockSite = u.block ? u.block : (u.siteName ? u.siteName : "");
+   tr.innerHTML = `
+    <td>${u.username}</td>
+    <td>${displayBlockSite}</td>
+    <td>${mapType(u.type)}</td>
+    <td>${u.password}</td>
+    <td>${u.phone||''}</td>
+    <td>
+      <button class="edit" data-username="${u.username}">DÜZENLE</button>
+      <button class="soft-delete" data-username="${u.username}">PASİFE AL</button>
+      <button class="delete" data-username="${u.username}">TAMAMEN SİL</button>
+    </td>`;
+      usersTable.appendChild(tr);
+    });
+
+  document.getElementById('userSummary').innerHTML =
+    `👤 Site Sakinleri: ${sakiniCount} | 🛡️ Güvenlik: ${guvenlikCount} | ⭐ Amir: ${amirCount}`;
+
+  attachRowEvents();
+}
+
+
+// Satır eventleri (Düzenle ve Sil)
+function attachRowEvents(){
+  // 1. SOFT DELETE (PASİFE ALMA)
+  document.querySelectorAll('.soft-delete').forEach(btn => {
+    btn.onclick = async () => {
+      const uname = btn.dataset.username;
+      if(confirm(uname + ' kullanıcısı pasife alınsın mı?')) {
+        await update(ref(db, 'users/' + uname), { isActive: false });
+        alert("Pasife alındı.");
+      }
+    }
+  });
+
+  // 2. HARD DELETE (TAMAMEN SİLME)
+  document.querySelectorAll('.delete').forEach(btn => {
+    btn.onclick = async () => {
+      const uname = btn.dataset.username;
+      if(confirm('DİKKAT! ' + uname + ' tamamen silinecek! Geri alınamaz!')) {
+        await remove(ref(db, 'users/' + uname));
+        alert("Kökten silindi.");
+      }
+    }
+  });
+
+  // 3. EDİT (DÜZENLE) - Mevcut haliyle kalsın
+  document.querySelectorAll('.edit').forEach(btn=>{
+    btn.onclick = () => {
+      const user = allUsers[btn.dataset.username];
+      const editInput = document.getElementById('editApartment');
+      editInput.value = user.username;
+      editInput.dataset.old = user.username; 
+      document.getElementById('editPassword').value = user.password;
+      document.getElementById('editPhone').value = user.phone||'';
+      document.getElementById('editModal').style.display = "flex";
+    }
+  });
+}
+
+// Listeyi başlat
+document.getElementById('userFilter').addEventListener('change', e => { listUsers(e.target.value); });
+
+// Dinamik alan göster
+const newType = document.getElementById('newType');
+const residentFields = document.getElementById('residentFields');
+const otherFields = document.getElementById('otherFields');
+function toggleFields(){
+  if(newType.value === "resident"){
+    residentFields.style.display = "block"; 
+    otherFields.style.display = "none";
+  } else { // admin, security ve company için
+    residentFields.style.display = "none"; 
+    otherFields.style.display = "block";
+  }
+}
+
+newType.addEventListener('change', toggleFields);
+toggleFields();
+
+// Tüm inputları büyük harfe çevir
+document.querySelectorAll('input').forEach(inp=>{
+  inp.addEventListener('input', ()=>{ inp.value = inp.value.toUpperCase(); });
+});
+
+// Yeni kullanıcı oluştur
+document.getElementById('createUserBtn').addEventListener('click', async ()=>{
+  const type = newType.value;
+  let username, password, phone, block, siteName;
+
+ if(type==="resident"){
+    block = document.getElementById('newBlock').value.trim().toUpperCase();
+    siteName = document.getElementById('newSite').value.trim().toUpperCase();
+    username = document.getElementById('newApartment').value.trim().toUpperCase();
+    password = username;
+    phone = document.getElementById('newPhone').value.trim();
+} else if(type==="admin" || type==="company" || type==="security"){
+    username = document.getElementById('newUsername').value.trim().toUpperCase();
+    password = username;
+    phone = document.getElementById('newPhoneOther').value.trim();
+    block = "";
+    siteName = "";
+}
+
+
+  if(!username){ 
+    alert("Kullanıcı adı boş olamaz!"); 
+    return; 
+  }
+
+await set(ref(db,'users/'+username), {
+    username, 
+    password, 
+    type, 
+    block:block||"", 
+    siteName:siteName||"", 
+    phone,
+    isActive: true // <-- Bunu satırın sonuna ekle
+});
+  alert("Kullanıcı oluşturuldu!");
+
+  // Inputları temizle
+  document.getElementById('newApartment').value = "";
+  document.getElementById('newSite').value = "";
+  document.getElementById('newBlock').selectedIndex = 0;
+  document.getElementById('newUsername').value = "";
+  document.getElementById('newPhone').value = "";
+  document.getElementById('newPhoneOther').value = "";
+
+  // Listeyi güncelle
+  listUsers();
+});
+
+// Toplu ekleme
+async function addBulkUsers(count) {
+  const block = document.getElementById('bulkBlock').value.trim().toUpperCase();
+  const siteName = document.getElementById('bulkSite').value.trim().toUpperCase();
+
+  const snapshot = await get(ref(db, 'users'));
+  const val = snapshot.val() || {};
+
+  // ✅ Sadece seçilen blok veya siteye ait kullanıcıları al
+  const existingNums = Object.values(val)
+    .filter(u => {
+      if (block && siteName) return u.block === block && u.siteName === siteName;
+      if (block) return u.block === block;
+      if (siteName) return u.siteName === siteName;
+      return false;
+    })
+    .map(u => {
+      const match = u.username.match(/\d+$/);
+      return match ? parseInt(match[0]) : 0;
+    });
+
+  // ✅ Eğer hiç yoksa 1’den başla, varsa en büyük numaradan devam et
+  let start = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+
+  for (let i = start; i < start + count; i++) {
+    let username = siteName 
+      ? (block ? siteName + block + i : siteName + i) 
+      : (block ? block + i : "USER" + i);
+
+    username = username.toUpperCase();
+
+    await set(ref(db, 'users/' + username), {
+      username,
+      password: username,
+      type: 'resident',
+      block: block || "",
+      siteName: siteName || "",
+      phone: ''
+    });
+  }
+}
+
+document.querySelectorAll('.bulkBtn').forEach(btn=>{
+  btn.addEventListener('click', async ()=> {
+    const count = parseInt(btn.dataset.count);
+    await addBulkUsers(count);
+    document.getElementById('bulkMsg').innerText=`${count} kullanıcı eklendi!`;
+  });
+});
+
+// Toplu silme
+document.getElementById('bulkDeleteBtn').addEventListener('click', async ()=> {
+  if(confirm('Tüm kullanıcılar silinsin mi?')){ await remove(ref(db,'users')); document.getElementById('bulkMsg').innerText="Tüm kullanıcılar silindi!"; }
+});
+
+// Düzenleme modal
+document.getElementById('closeEditBtn').addEventListener('click', ()=> {document.getElementById('editModal').style.display="none";});
+document.getElementById('saveEditBtn').addEventListener('click', async ()=> {
+  const oldUsername = document.getElementById('editApartment').dataset.old; // eski username
+  const newUsername = document.getElementById('editApartment').value.trim().toUpperCase();
+  const password = document.getElementById('editPassword').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+
+  if(!newUsername){ alert("Kullanıcı adı boş olamaz!"); return; }
+
+  if(oldUsername === newUsername){
+    // Username değişmemiş, sadece update
+    await update(ref(db,'users/'+oldUsername), {password, phone});
+  } else {
+    // Username değişmiş, yeni key oluştur ve eskiyi sil
+    const oldDataSnap = await get(ref(db,'users/'+oldUsername));
+    if(oldDataSnap.exists()){
+      const oldData = oldDataSnap.val();
+      await set(ref(db,'users/'+newUsername), {...oldData, username: newUsername, password, phone});
+      await remove(ref(db,'users/'+oldUsername));
+    }
+  }
+
+  document.getElementById('editModal').style.display="none";
+});
+
+
+// Arama
+document.getElementById('searchBtn').addEventListener('click', ()=>{
+  const query = document.getElementById('searchInput').value.trim().toUpperCase();
+  if(!query){document.getElementById('searchMsg').innerText="Arama boş!"; return;}
+  const result = Object.values(allUsers).filter(u=>u.username.includes(query));
+  if(result.length===0){document.getElementById('searchMsg').innerText="Kullanıcı bulunamadı!"; usersTable.innerHTML="";} 
+  else {
+    document.getElementById('searchMsg').innerText=`${result.length} kullanıcı bulundu.`;
+    usersTable.innerHTML="";
+    result.forEach(u => {
+      const displayBlockSite = u.block ? u.block : (u.siteName ? u.siteName : "");
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${u.username}</td>
+                      <td>${displayBlockSite}</td>
+                      <td>${mapType(u.type)}</td>
+                      <td>${u.password}</td>
+                      <td>${u.phone||''}</td>
+                      <td>
+                        <button class="edit" data-username="${u.username}">DÜZENLE</button>
+                        <button class="delete" data-username="${u.username}">SİL</button>
+                      </td>`;
+      usersTable.appendChild(tr);
+    });
+    attachRowEvents();
+  }
+});
+
+
+// --- SİNYAL KONTROL SİSTEMİ ---
+const sinyalBtn = document.getElementById('sinyalBtn');
+const sinyalModal = document.getElementById('sinyalModal');
+const sinyalTableBody = document.getElementById('sinyalTableBody');
+const closeSinyalBtn = document.getElementById('closeSinyalBtn');
+let lastTimes = {}; // Sinyal vakitlerini takip etmek için
+
+sinyalBtn.addEventListener('click', () => {
+  if (!db) { alert("Lütfen önce bir site seçin!"); return; }
+  sinyalModal.style.display = "flex";
+
+  // testkordinat düğümünü dinle
+  const sinyalRef = ref(db, 'testkordinat');
+  onValue(sinyalRef, (snapshot) => {
+    sinyalTableBody.innerHTML = "";
+    const data = snapshot.val();
+
+    if (!data) {
+      sinyalTableBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Aktif sinyal bulunmuyor.</td></tr>";
+      return;
+    }
+
+    Object.keys(data).forEach(key => {
+      const s = data[key];
+      const tr = document.createElement('tr');
+      
+      // Eğer tarih değişmişse (yeni sinyal gelmişse) kırmızı yak
+      if (lastTimes[key] && lastTimes[key] !== s.tarih) {
+        tr.classList.add('new-signal-blink');
+      }
+      lastTimes[key] = s.tarih;
+
+      const mapUrl = `https://www.google.com/maps?q=${s.enlem},${s.boylam}`;
+
+      tr.innerHTML = `
+        <td><b>${key}</b></td>
+        <td>${s.enlem.toFixed(5)} / ${s.boylam.toFixed(5)}</td>
+        <td style="color:#2ecc71; font-weight:bold;">${s.tarih || '---'}</td>
+        <td>
+          <button onclick="window.open('${mapUrl}', '_blank')" style="background:#3498db; padding:6px 10px; font-size:12px;">📍 HARİTA</button>
+          <button class="reset-single-btn" data-id="${key}" style="background:#e67e22; padding:6px 10px; font-size:12px;">❌ SIFIRLA</button>
+        </td>
+      `;
+      sinyalTableBody.appendChild(tr);
+    });
+
+    // Sadece o satırı sıfırlama işlemi
+    document.querySelectorAll('.reset-single-btn').forEach(btn => {
+      btn.onclick = async (e) => {
+        const userId = e.target.dataset.id;
+        if(confirm(userId + " sinyal bilgisi silinsin mi?")) {
+           await remove(ref(db, 'testkordinat/' + userId));
+        }
+      };
+    });
+  });
+});
+
+closeSinyalBtn.onclick = () => { sinyalModal.style.display = "none"; };
+// --- SİNYAL KONTROL SONU ---
+</script>
+<script>
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  sessionStorage.removeItem("adminAuth");
+  window.location.href = "index.html";
+});
+</script>
+<div id="sinyalModal" class="modal">
+  <div class="modal-content" style="width: 85%; max-width: 950px; background:#222f3e;">
+    <h2 style="color:#ffcc00; border-bottom:1px solid #444; padding-bottom:10px;">GÜVENLİK SİNYAL TAKİBİ</h2>
+    <div style="overflow-x:auto; max-height:400px;">
+      <table style="width:100%;">
+        <thead>
+          <tr>
+            <th>Personel</th>
+            <th>Konum (Enlem/Boylam)</th>
+            <th>Son Sinyal</th>
+            <th>İşlemler</th>
+          </tr>
+        </thead>
+        <tbody id="sinyalTableBody"></tbody>
+      </table>
+    </div>
+    <button id="closeSinyalBtn" style="background:#e74c3c; color:white; margin-top:15px;">KAPAT</button>
+  </div>
+</div>
+
+<style>
+/* Kırmızı yanıp sönme animasyonu */
+@keyframes signalBlink {
+  0% { background-color: rgba(231, 76, 60, 0.7); }
+  100% { background-color: transparent; }
+}
+.new-signal-blink {
+  animation: signalBlink 2.5s ease-out;
+}
+</style>
+</body>
+</html>

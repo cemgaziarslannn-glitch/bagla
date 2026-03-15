@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGA ULTRA | COMMAND CENTER</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: #020408;
+            --panel: rgba(15, 18, 24, 0.85);
+            --accent: #00d2ff;
+            --accent-glow: rgba(0, 210, 255, 0.4);
+            --danger: #ff4d4d;
+            --success: #00ff88;
+            --border: rgba(255, 255, 255, 0.08);
+            --edit-btn: #f39c12;
+        }
+
+        /* MOBİL VE GENEL YAPI AYARLARI */
+        body { 
+            background: var(--bg); 
+            color: #fff; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; /* Mobilde alt alta */
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 210, 255, 0.1) 0, transparent 40%), 
+                radial-gradient(at 100% 100%, rgba(58, 123, 213, 0.1) 0, transparent 40%);
+        }
+
+        /* MASAÜSTÜ GÖRÜNÜM (992px üstü yan yana) */
+        @media (min-width: 992px) {
+            body { 
+                flex-direction: row; 
+                height: 100vh;
+                overflow: hidden;
+            }
+            .sidebar { 
+                width: 360px; 
+                height: 100vh; 
+                overflow-y: auto; 
+                border-right: 1px solid var(--border);
+                border-bottom: none;
+            }
+            .main { 
+                flex: 1; 
+                height: 100vh; 
+                overflow-y: auto; 
+            }
+        }
+
+        /* GERİ BUTONU */
+        .back-nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-back:hover {
+            background: var(--accent);
+            color: #000;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* SIDEBAR (MOBİLDE ÜST PANEL) */
+        .sidebar { 
+            background: var(--panel); 
+            padding: 30px; 
+            backdrop-filter: blur(25px);
+            z-index: 10;
+            box-sizing: border-box;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand-logo {
+            background: var(--accent);
+            color: #000;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .brand-name b { color: var(--accent); font-size: 1.3rem; letter-spacing: -1px; }
+        .brand-name span { display: block; font-size: 8px; letter-spacing: 2px; opacity: 0.6; font-weight: 800; }
+
+        /* FORM ELEMANLARI */
+        .group { margin-bottom: 20px; }
+        label { 
+            font-size: 10px; 
+            color: #888; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 1.2px; 
+            display: block; 
+            margin-bottom: 8px;
+        }
+        
+        select { 
+            width: 100%; 
+            padding: 12px; 
+            background: rgba(255, 255, 255, 0.04); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            color: #fff; 
+            outline: none; 
+            transition: 0.3s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        select:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.08); }
+
+        .btn { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5); 
+            border: 0; 
+            border-radius: 14px; 
+            color: white; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: 0.4s; 
+            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .btn:active { transform: scale(0.98); }
+        .btn.update-mode { background: linear-gradient(135deg, #f39c12, #e67e22); }
+
+        /* ANA ALAN VE KARTLAR */
+        .main { 
+            flex: 1; 
+            padding: 25px; 
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .main-header {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        @media (min-width: 640px) {
+            .main-header { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
+
+        .system-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--success);
+            background: rgba(0, 255, 136, 0.1);
+            padding: 6px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            display: inline-block;
+        }
+
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); 
+            gap: 20px; 
+        }
+        
+        @media (min-width: 640px) {
+            .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+        }
+
+        .active-card { 
+            background: rgba(255,255,255,0.03); 
+            border: 1px solid var(--border); 
+            border-radius: 20px; 
+            padding: 20px; 
+            position: relative; 
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .active-card:hover { border-color: var(--accent); }
+
+        .timer { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; color: var(--success); margin: 12px 0; font-weight: 700; }
+
+        .info { font-size: 12px; color: #999; margin-bottom: 6px; }
+        .info b { color: #fff; }
+
+        .btn-finish { 
+            margin-top: 15px; 
+            width: 100%; 
+            padding: 10px; 
+            background: rgba(255, 77, 77, 0.05); 
+            border: 1px solid var(--danger); 
+            color: var(--danger); 
+            border-radius: 10px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            font-size: 12px;
+        }
+
+        .btn-finish:hover { background: var(--danger); color: white; }
+
+        #cancelEdit { color: var(--danger); font-size: 11px; cursor: pointer; display: none; margin-top: 15px; text-align: center; font-weight: 800; }
+        
+        .edit-icon { 
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            color: var(--edit-btn); 
+            cursor: pointer; 
+            opacity: 0.7;
+        }
+		/* Açılır kutu seçeneklerinin (listesinin) görünümü */
+select option {
+    background-color: #111827; /* Koyu gri/siyah arka plan */
+    color: #ffffff;           /* Beyaz yazı rengi */
+    padding: 10px;
+}
+
+/* Bazı mobil tarayıcılarda varsayılan beyazlığı kırmak için */
+select {
+    color-scheme: dark; /* Tarayıcıya bu alanın karanlık mod olduğunu bildirir */
+}
+    </style>
+</head>
+<body>
+
+<div class="back-nav">
+    <a href="mod.html" class="btn-back">
+        <i class="fas fa-arrow-left"></i> GERİ
+    </a>
+</div>
+
+<div class="sidebar">
+    <div class="brand-header">
+        <div class="brand-logo">CGA</div>
+        <div class="brand-name">
+            <b>ULTRA</b>
+            <span>SECURITY SYSTEMS</span>
+        </div>
+    </div>
+
+    <h2 id="formTitle" style="font-size: 1.1rem; margin-bottom: 20px; color: var(--accent);">NÖBET KONTROL</h2>
+
+    <div class="group">
+        <label><i class="fas fa-user-shield"></i> NÖBETİ DEVREDEN</label>
+        <select id="fromSecurity"></select>
+    </div>
+
+    <div class="group">
+        <label><i class="fas fa-user-check"></i> NÖBETİ ALAN</label>
+        <select id="startBy"></select>
+    </div>
+
+    <div class="group">
+        <label><i class="fas fa-map-marker-alt"></i> GÖREV NOKTASI</label>
+        <select id="startPoint"></select>
+    </div>
+
+    <div class="group">
+        <label><i class="fas fa-sun"></i> VARDİYA</label>
+        <select id="shift">
+            <option>Gündüz</option>
+            <option>Gece</option>
+        </select>
+    </div>
+
+    <input type="hidden" id="editingId" value="">
+    <button class="btn" id="mainBtn" onclick="handleAction()">SİSTEMİ BAŞLAT</button>
+    <div id="cancelEdit" onclick="resetForm()">DÜZENLEMEYİ İPTAL ET</div>
+</div>
+
+<div class="main">
+    <div class="main-header">
+        <h2 style="margin: 0; font-size: 1.4rem;">AKTİF OPERASYONLAR</h2>
+        <div class="system-status" id="siteIndicator">● CGA NETWORK ONLINE</div>
+    </div>
+    
+    <div id="activeList" class="grid">
+        </div>
+</div>
+
+</body>
+</html>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getDatabase, ref, get, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+// MERKEZ CONFIG
+const merkezConfig = {
+    apiKey: "AIzaSyAM5NHBpRHIlttNXwJ9YKDypR4eoyQbDeM",
+    authDomain: "kolartguvenlik-e002d.firebaseapp.com",
+    databaseURL: "https://kolartguvenlik-e002d-default-rtdb.firebaseio.com",
+    projectId: "kolartguvenlik-e002d"
+};
+
+// Global Değişkenler
+let db; 
+let activeRecordsGlobal = {}; 
+
+async function initSystem() {
+    const app = initializeApp(merkezConfig, "merkez_hub_ultra");
+    const mDb = getDatabase(app);
+    const siteId = sessionStorage.getItem("selectedSiteId") || sessionStorage.getItem("selectedSite") || "site1";
+
+    try {
+        const cfgSnap = await get(ref(mDb, `sites/${siteId}/config`));
+        if(!cfgSnap.exists()) {
+            alert("Site konfigürasyonu bulunamadı!");
+            return;
+        }
+
+        const siteApp = initializeApp(cfgSnap.val(), siteId);
+        db = getDatabase(siteApp);
+
+        document.getElementById("siteIndicator").innerText = `● CGA NETWORK: ${siteId.toUpperCase()}`;
+        
+        await loadLists();
+        listenActive();
+
+    } catch (err) {
+        console.error("Başlatma hatası:", err);
+    }
+}
+
+function getTRTime() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Istanbul"})).toISOString(); }
+
+async function loadLists() {
+    const uSnap = await get(ref(db, "users"));
+    let uHtml = '<option value="">Seçiniz...</option>';
+    if(uSnap.exists()) {
+        Object.entries(uSnap.val()).forEach(([id, u]) => {
+            if(u.type?.toLowerCase() === "security") {
+                const name = u.username || id;
+                uHtml += `<option value="${name}">${name}</option>`;
+            }
+        });
+    }
+    document.getElementById("fromSecurity").innerHTML = uHtml;
+    document.getElementById("startBy").innerHTML = uHtml;
+
+    const rootSnap = await get(ref(db, "/"));
+    let pShadow = '<option value="">Nokta Seçiniz...</option>';
+    if(rootSnap.exists()){
+        Object.keys(rootSnap.val()).forEach(key => {
+            if(key.toLowerCase().endsWith("qrcodes")) {
+                const clean = key.replace(/qrcodes$/i, "").trim();
+                pShadow += `<option value="${clean}">${clean}</option>`;
+            }
+        });
+    }
+    document.getElementById("startPoint").innerHTML = pShadow;
+}
+
+window.handleAction = async () => {
+    const editId = document.getElementById("editingId").value;
+    const data = {
+        fromSecurity: document.getElementById("fromSecurity").value,
+        shift: document.getElementById("shift").value,
+        startBy: document.getElementById("startBy").value,
+        startPoint: document.getElementById("startPoint").value,
+        status: "started"
+    };
+
+    if(!data.fromSecurity || !data.startPoint) return alert("Lütfen tüm alanları doldurun!");
+
+    if(editId) {
+        await update(ref(db, `nobetRecords/${editId}`), data);
+        alert("Nöbet başarıyla güncellendi.");
+        window.resetForm();
+    } else {
+        // PERSONEL KONTROLÜ KALDIRILDI - ARTIK SERBESTÇE SEÇEBİLİRSİNİZ
+        data.startTime = getTRTime();
+        await push(ref(db, "nobetRecords"), data);
+        alert("Nöbet kaydı oluşturuldu.");
+        window.resetForm();
+    }
+};
+
+window.editRecord = (id) => {
+    const n = activeRecordsGlobal[id];
+    if(!n) return;
+    document.getElementById("editingId").value = id;
+    document.getElementById("fromSecurity").value = n.fromSecurity;
+    document.getElementById("startBy").value = n.startBy;
+    document.getElementById("startPoint").value = n.startPoint;
+    document.getElementById("shift").value = n.shift;
+    document.getElementById("mainBtn").innerText = "GÜNCELLEMEYİ ONAYLA";
+    document.getElementById("mainBtn").classList.add("update-mode");
+    document.getElementById("formTitle").innerText = "KAYIT DÜZENLEME";
+    document.getElementById("cancelEdit").style.display = "block";
+    document.getElementById("fromSecurity").disabled = true; 
+};
+
+window.resetForm = () => {
+    document.getElementById("editingId").value = "";
+    document.getElementById("fromSecurity").value = "";
+    document.getElementById("startBy").value = "";
+    document.getElementById("startPoint").value = "";
+    document.getElementById("shift").value = "Gündüz";
+    document.getElementById("mainBtn").innerText = "SİSTEMİ BAŞLAT";
+    document.getElementById("mainBtn").classList.remove("update-mode");
+    document.getElementById("formTitle").innerText = "NÖBET KONTROL";
+    document.getElementById("cancelEdit").style.display = "none";
+    document.getElementById("fromSecurity").disabled = false;
+};
+
+function listenActive() {
+    onValue(ref(db, "nobetRecords"), (snap) => {
+        const listDiv = document.getElementById("activeList");
+        listDiv.innerHTML = "";
+        activeRecordsGlobal = snap.exists() ? snap.val() : {};
+        if(!snap.exists()) return;
+        Object.entries(snap.val()).forEach(([id, n]) => {
+            if(n.status !== "started") return;
+            const card = document.createElement("div");
+            card.className = "active-card";
+            card.innerHTML = `
+                <i class="fas fa-edit edit-icon" onclick="window.editRecord('${id}')"></i>
+                <div style="font-weight:800; color:var(--accent); font-size:1.1rem; margin-bottom:15px">${n.startPoint}</div>
+                <div class="info">NÖBET DEVREDEN: <b>${n.fromSecurity}</b></div>
+                <div class="info">NÖBET ALAN: <b>${n.startBy}</b></div>
+                <div class="timer" id="timer_${id}">00:00:00</div>
+                <button class="btn-finish" onclick="window.finishNobet('${id}')">GÖREVİ BİTİR</button>
+                <div class="card-label">CGA ULTRA SECURED</div>
+            `;
+            listDiv.appendChild(card);
+            runClock(id, n.startTime);	
+        });
+    });
+}
+
+function runClock(id, start) {
+    const startTime = new Date(start).getTime();
+    const itv = setInterval(() => {
+        const el = document.getElementById("timer_" + id);
+        if(!el) { clearInterval(itv); return; }
+        const diff = new Date().getTime() - startTime;
+        const h = Math.floor(diff / 3600000).toString().padStart(2,'0');
+        const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2,'0');
+        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2,'0');
+        el.innerText = `${h}:${m}:${s}`;
+    }, 1000);
+}
+
+window.finishNobet = async (id) => {
+    if(!confirm("Nöbeti sonlandırmak istediğinize emin misiniz?")) return;
+    const n = activeRecordsGlobal[id];
+    const finishData = {
+        deliveredBy: n.startBy,
+        deliveredTo: n.fromSecurity,
+        endPoint: n.startPoint,
+        endTime: getTRTime(),
+        forSecurity: n.fromSecurity,
+        shift: n.shift,
+        startBy: n.startBy,
+        startPoint: n.startPoint,
+        startTime: n.startTime,
+        status: "FINISHED"
+    };
+    await push(ref(db, "tamamnbt"), finishData);
+    await remove(ref(db, `nobetRecords/${id}`));
+    window.resetForm();
+};
+
+initSystem();
+</script>
+</body>
+</html>

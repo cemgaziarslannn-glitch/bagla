@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚙️ Yönetim Paneli</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg: #0e1725;
+  --card: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,.15);
+  --accent: #ffcc00;
+  --green: #27ae60;
+  --red: #e74c3c;
+}
+
+body{
+  margin:0; padding:0;
+  background:var(--bg);
+  font-family:'Montserrat',sans-serif;
+  color:white;
+  display:flex;
+  justify-content:flex-start;
+  align-items:flex-start;
+  height:100vh;
+  padding:40px 5%;
+  overflow-x:hidden;
+  gap:25px;
+}
+
+/* Çıkış */
+#exitBtn{
+  position:fixed;
+  top:14px; right:14px;
+  background:var(--red);
+  color:white;
+  border:none;
+  border-radius:10px;
+  padding:8px 14px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.2s;
+}
+#exitBtn:hover{ background:#ff6b6b; }
+
+/* Alan */
+.settings-area{
+  width:420px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+/* Kart */
+.card{
+  background:var(--card);
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 0 25px rgba(0,0,0,.35);
+  animation:fade .4s ease;
+}
+@keyframes fade{from{opacity:0; transform:translateY(20px);}}
+
+/* Başlık */
+.card h2{
+  margin:0 0 12px 0;
+  font-size:20px;
+  color:var(--accent);
+}
+
+/* Input */
+input, select{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  background:rgba(0,0,0,.35);
+  border:1px solid var(--border);
+  color:white;
+  font-weight:600;
+  margin-bottom:10px;
+}
+input:focus{outline:none; border-color:var(--accent);}
+
+/* Buton */
+.btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  background:var(--green);
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+}
+.btn:hover{background:#2ecc71;}
+
+/* Switch */
+.switch-holder{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.switch-holder span{font-weight:600;}
+
+.switch{
+  position:relative;
+  width:56px; height:27px;
+}
+.switch input{display:none;}
+.slider{
+  position:absolute;
+  cursor:pointer;
+  top:0; left:0; right:0; bottom:0;
+  background:#666;
+  border-radius:25px;
+  transition:.3s;
+}
+.slider:before{
+  content:"";
+  height:21px; width:21px;
+  background:white;
+  border-radius:50%;
+  position:absolute;
+  bottom:3px; left:3px;
+  transition:.3s;
+}
+input:checked + .slider{background:var(--green);}
+input:checked + .slider:before{transform:translateX(29px);}
+
+.msg{text-align:center; margin-top:8px; font-weight:700;}
+
+#alanList{font-size:14px; opacity:.8; margin-top:10px;}
+</style>
+</head>
+
+<body>
+
+<button id="exitBtn">Çıkış</button>
+
+<div class="settings-area">
+
+  <!-- Site adı -->
+  <div class="card">
+    <h2>🏢 Site / Apartman Adı</h2>
+    <input type="text" id="siteName" placeholder="Berfin Apartmanı">
+    <button class="btn" id="saveSite">KAYDET</button>
+    <div class="msg" id="msgSite"></div>
+  </div>
+
+  <!-- Kayıt Butonu -->
+  <div class="card">
+    <h2>📄 Kayıt Butonu</h2>
+    <div class="switch-holder">
+      <span id="switchText">Yükleniyor...</span>
+      <label class="switch">
+        <input type="checkbox" id="kayitSwitch">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <button class="btn" id="saveSwitch">AYARI KAYDET</button>
+    <div class="msg" id="msgSwitch"></div>
+  </div>
+
+  <!-- 🌟 ALAN OLUŞTURMA -->
+  <div class="card">
+    <h2>⚙️ Alan Oluştur</h2>
+    <input type="text" id="alanAdi" placeholder="Örn: Ziyaret Sebebi">
+
+    <label class="switch-holder">
+      <span>Zorunlu Alan</span>
+      <label class="switch"><input type="checkbox" id="zorunlu"><span class="slider"></span></label>
+    </label>
+
+    <label class="switch-holder">
+      <span>Aktif Alanda Göster</span>
+      <label class="switch"><input type="checkbox" id="aktifGoster" checked><span class="slider"></span></label>
+    </label>
+
+    <button class="btn" id="alanKaydet">ALAN EKLE</button>
+    <div class="msg" id="alanMsg"></div>
+    <div id="alanList"></div>
+  </div>
+<!-- Proje ID -->
+<div class="card">
+  <h2>🆔 Proje ID</h2>
+  <input type="text" id="projeIdInput" placeholder="Örn: PROJE-12345">
+  <div style="display:flex; gap:6px; margin-top:8px;">
+    <button class="btn" id="saveProjeId" style="flex:1; padding:8px; font-size:14px;">KAYDET</button>
+    <button class="btn" style="flex:1; padding:8px; font-size:14px; background:#3498db;" 
+            onclick="window.location.href='IDBUL.html'">
+      🔍 ID BUL
+    </button>
+  </div>
+  <div class="msg" id="msgProjeId"></div>
+</div>
+
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getDatabase, ref, get, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+async function initPage(){
+
+  // 🔹 Seçilen siteyi ana panelden al
+  const selectedSiteId = sessionStorage.getItem("selectedSite");
+  if(!selectedSiteId){
+    alert("Lütfen ana panelden bir site seçin!");
+    window.location.href = "index.html";
+    return;
+  }
+
+  // 🔹 Merkez DB başlat
+  const merkezConfig = {
+      apiKey: "AIzaSyAM5NHBpRHIlttNXwJ9YKDypR4eoyQbDeM",
+  authDomain: "kolartguvenlik-e002d.firebaseapp.com",
+  databaseURL: "https://kolartguvenlik-e002d-default-rtdb.firebaseio.com",
+  projectId: "kolartguvenlik-e002d",
+  storageBucket: "kolartguvenlik-e002d.firebasestorage.app",
+  messagingSenderId: "212955174898",
+  appId: "1:212955174898:web:f77501991c1648fb66bd6b",
+  measurementId: "G-TCGDNDYY6Y"
+  };
+  const merkezApp = initializeApp(merkezConfig, "merkez");
+  const merkezDb = getDatabase(merkezApp);
+
+  // 🔹 Site config’i merkezden al
+  const siteConfigSnap = await get(ref(merkezDb, "sites/" + selectedSiteId + "/config"));
+  if(!siteConfigSnap.exists()){
+    alert("Site config bulunamadı!");
+    window.location.href = "index.html";
+    return;
+  }
+  const siteConfig = siteConfigSnap.val();
+
+  // 🔹 Site DB başlat
+  const siteApp = initializeApp(siteConfig, selectedSiteId);
+  const db = getDatabase(siteApp);
+
+  /*** ELEMENTLER ***/
+  const siteName = document.getElementById("siteName");
+  const saveSite = document.getElementById("saveSite");
+  const msgSite = document.getElementById("msgSite");
+
+  const kayitSwitch = document.getElementById("kayitSwitch");
+  const switchText = document.getElementById("switchText");
+  const saveSwitch = document.getElementById("saveSwitch");
+  const msgSwitch = document.getElementById("msgSwitch");
+
+  const alanAdi = document.getElementById("alanAdi");
+  const zorunlu = document.getElementById("zorunlu");
+  const aktifGoster = document.getElementById("aktifGoster");
+  const alanKaydet = document.getElementById("alanKaydet");
+  const alanMsg = document.getElementById("alanMsg");
+  const alanList = document.getElementById("alanList");
+
+  const projeIdInput = document.getElementById("projeIdInput");
+  const saveProjeId = document.getElementById("saveProjeId");
+  const msgProjeId = document.getElementById("msgProjeId");
+
+  const exitBtn = document.getElementById("exitBtn");
+
+  /*** Çıkış ***/
+  exitBtn.onclick = ()=>window.location.href="Mod.html";
+
+  /*** Yükle ***/
+  async function load(){
+    // Site adı
+    const n = await get(ref(db,"settings/siteName"));
+    if(n.exists()) siteName.value = n.val();
+
+    // Kayıt buton görünürlüğü
+    const k = await get(ref(db,"panel/kayitAktif"));
+    const ac = k.exists() ? k.val() : false;
+    kayitSwitch.checked = ac;
+    switchText.textContent = ac ? "Görünür ✓" : "Gizli ✖️";
+
+    // 🔹 Proje ID yükleme
+    const p = await get(ref(db,"settings/projeId"));
+    if(p.exists()) projeIdInput.value = p.val();
+  }
+  load();
+
+  /*** Site adı kaydet ***/
+  saveSite.onclick = async()=>{
+    await set(ref(db,"settings/siteName"), siteName.value.trim());
+    msgSite.textContent="Kaydedildi ✓"; msgSite.style.color="#2ecc71";
+    setTimeout(()=>msgSite.textContent="",1500);
+  };
+
+  /*** Kayıt buton görünürlüğü ***/
+  saveSwitch.onclick = async()=>{
+    const ac = kayitSwitch.checked;
+    await set(ref(db,"panel/kayitAktif"), ac);
+    msgSwitch.textContent = ac ? "🟢 Açık" : "🔴 Kapalı";
+    switchText.textContent = ac ? "Görünür ✓" : "Gizli ✖️";
+    setTimeout(()=>msgSwitch.textContent="",1500);
+  };
+
+  /*** Proje ID kaydet ***/
+  saveProjeId.onclick = async () => {
+    let pid = projeIdInput.value.trim();
+    if(!pid){
+      msgProjeId.textContent = "⚠️ Proje ID boş!";
+      msgProjeId.style.color = "var(--red)";
+      return;
+    }
+
+    await set(ref(db, "settings/projeId"), pid);
+    msgProjeId.textContent = "Kaydedildi ✓";
+    msgProjeId.style.color = "#2ecc71";
+
+    setTimeout(() => msgProjeId.textContent = "", 1500);
+  };
+
+  /*** Alan ekle ***/
+  alanKaydet.onclick = async()=>{
+    let orijinal = alanAdi.value.trim();
+    if(!orijinal){
+      alanMsg.textContent="⚠️ Alan adı boş!";
+      alanMsg.style.color="var(--red)";
+      return;
+    }
+
+    let temizID = orijinal.replace(/[.#$/\[\]]/g,"").replace(/\s+/g," ").trim();
+
+    await set(ref(db, "panel/alanlar/" + temizID), {
+      adi: orijinal,
+      zorunlu: zorunlu.checked,
+      aktifAlandaGoster: aktifGoster.checked
+    });
+
+    alanMsg.textContent="✔️ Alan eklendi!";
+    alanMsg.style.color="var(--green)";
+    alanAdi.value=""; zorunlu.checked=false; aktifGoster.checked=true;
+    setTimeout(()=>alanMsg.textContent="",1500);
+  };
+
+  /*** Listeleme ***/
+  let silinecekID = null;
+
+  onValue(ref(db,"panel/alanlar"), snap=>{
+    if(!snap.exists()){ alanList.innerHTML = "Henüz alan yok"; return; }
+
+    let html = "<b>📌 Eklenen Alanlar:</b><br><br>";
+    snap.forEach(s=>{
+      const id = s.key;
+      const v = s.val();
+      html += `
+        <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,.1); padding:6px 0;">
+          <div>
+            <b>${v.adi}</b>
+            <small>(${v.zorunlu?"Zorunlu":"İsteğe Bağlı"}) | ${v.aktifAlandaGoster?"Aktif":"Gizli"}</small>
+          </div>
+          <button style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;"
+                  onclick="silAlan('${id}')">Sil</button>
+        </div>
+      `;
+    });
+    alanList.innerHTML = html;
+  });
+
+  window.silAlan = (id)=>{
+    silinecekID = id;
+    document.getElementById("silModal").style.display = "flex";
+  };
+
+  document.getElementById("modalEvet").onclick = async()=>{
+    await remove(ref(db, `panel/alanlar/${silinecekID}`));
+    document.getElementById("silModal").style.display = "none";
+    silinecekID = null;
+  };
+
+  document.getElementById("modalHayir").onclick = ()=>{
+    document.getElementById("silModal").style.display = "none";
+    silinecekID = null;
+  };
+
+}
+
+initPage();
+</script>
+
+
+<!-- 🗑 Alan Silme Modal -->
+<div id="silModal" style="
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
+  justify-content:center; align-items:center; z-index:9999;
+">
+  <div style="
+    background:#1b2330; border:1px solid #444;
+    padding:25px; border-radius:14px; width:80%; max-width:330px;
+    text-align:center; color:white; font-family:Montserrat;
+  ">
+    <h3 style="margin-bottom:12px; font-size:19px;">⚠️ Onay</h3>
+    <p style="opacity:.85; margin-bottom:22px;">Bu alanı silmek istiyor musun?</p>
+
+    <div style="display:flex; gap:10px;">
+      <button id="modalEvet" style="
+        flex:1; padding:11px; border:none; border-radius:10px;
+        background:#e74c3c; color:white; font-weight:700; cursor:pointer;
+      ">Evet</button>
+
+      <button id="modalHayir" style="
+        flex:1; padding:11px; border:none; border-radius:10px;
+        background:#3b3f4a; color:white; font-weight:700; cursor:pointer;
+      ">İptal</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

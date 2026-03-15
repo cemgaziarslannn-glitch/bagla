@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proje Lookup ve Liste</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  body { font-family: Arial; margin: 20px; background: #f5f5f5; }
+  h1 { color: #333; }
+  input { padding: 8px; width: 100%; margin: 5px 0 10px; font-size: 16px; }
+  .project { background: #fff; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+  .project span { font-weight: bold; }
+  .arrow { margin: 0 10px; color: #007bff; }
+  .copy-btn { background: #007bff; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+  .copy-btn:hover { background: #0056b3; }
+</style>
+</head>
+<body>
+
+<h1>Proje Lookup ve Liste</h1>
+
+<label for="searchInput">Ara (proje ismi veya proje kodu):</label>
+<input type="text" id="searchInput" placeholder="PRJ_... veya proje ismi yazın" oninput="filterProjects()">
+
+<div id="projectsList"></div>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+  apiKey: "AIzaSyDF6XwfMwASz1mHt16DrR9jjjpozP4MBlA",
+  authDomain: "denetleme-78b55.firebaseapp.com",
+  databaseURL: "https://denetleme-78b55-default-rtdb.firebaseio.com",
+  projectId: "denetleme-78b55",
+  storageBucket: "denetleme-78b55.firebasestorage.app",
+  messagingSenderId: "762780340283",
+  appId: "1:762780340283:web:da64465ec4657307f64c1e",
+  measurementId: "G-H49EVRYPY9"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let projects = {}; // veriler buraya gelecek
+
+  // Firebase'den projeleri çek
+  db.ref("projects").once("value").then(snapshot => {
+    projects = snapshot.val() || {};
+    renderProjects();
+  });
+
+  // Projeleri listele
+  function renderProjects() {
+    const container = document.getElementById("projectsList");
+    container.innerHTML = "";
+
+    Object.keys(projects).forEach(code => {
+      const name = projects[code].projectName;
+      const div = document.createElement("div");
+      div.className = "project";
+      div.innerHTML = `
+        <span>${name}</span>
+        <span class="arrow">→</span>
+        <span>${code}</span>
+        <button class="copy-btn" onclick="copyToClipboard('${code}')">Kopyala</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // Arama filtreleme
+  function filterProjects() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    const container = document.getElementById("projectsList");
+    container.innerHTML = "";
+
+    Object.keys(projects).forEach(code => {
+      const name = projects[code].projectName;
+      if (name.toLowerCase().includes(query) || code.toLowerCase().includes(query)) {
+        const div = document.createElement("div");
+        div.className = "project";
+        div.innerHTML = `
+          <span>${name}</span>
+          <span class="arrow">→</span>
+          <span>${code}</span>
+          <button class="copy-btn" onclick="copyToClipboard('${code}')">Kopyala</button>
+        `;
+        container.appendChild(div);
+      }
+    });
+  }
+
+  // Kopyala butonu
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert(`"${text}" kopyalandı!`);
+    });
+  }
+</script>
+
+</body>
+</html>

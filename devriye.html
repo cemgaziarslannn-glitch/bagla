@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Devriye Noktaları & QR Kodlar</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body { margin:0; font-family:'Montserrat',sans-serif; background:#2c3e50; color:#ecf0f1; }
+.container { max-width:800px; margin:80px auto 20px; padding:20px; background: rgba(0,0,0,0.3); border-radius:12px; }
+h1 { text-align:center; margin-bottom:20px; }
+label { display:block; margin-top:15px; font-weight:600; }
+input, select, button { width:100%; padding:10px; margin:5px 0; border-radius:8px; border:none; font-size:16px; }
+button { cursor:pointer; font-weight:600; transition:0.3s; }
+button:hover { opacity:0.9; }
+#qrList div { margin:10px 0; padding:10px; background: rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; position: relative; }
+.qrCodeImg { width:300px; height:300px; border:1px solid #fff; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+#logoutBtn { position: fixed; top: 20px; left: 20px; width: 60px; height: 60px; background: #e74c3c; color: #fff; font-weight:700; border-radius:12px; border:none; cursor:pointer; z-index:1000; font-size:16px; }
+#qrLabel { position: fixed; top: 20px; right: 20px; color: #ecf0f1; font-weight:600; font-size:14px; opacity:0.7; z-index:1000; }
+
+.overlay {
+  position: fixed; top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.5);
+  display: flex; justify-content: center; align-items: center;
+  z-index:2000;
+}
+.modalBox {
+  background:#34495e;
+  padding:20px;
+  border-radius:12px;
+  width:320px;
+  text-align:center;
+}
+.modalBox input { width: 80%; margin:10px 0; }
+.modalMsg { margin-top:10px; font-size:14px; font-weight:600; }
+.successMsg { color:#27ae60; }
+.errorMsg { color:#e74c3c; }
+</style>
+</head>
+<body>
+
+<button id="logoutBtn">Çıkış</button>
+<div id="qrLabel">qrcodes</div>
+
+<div class="container">
+  <h1>Admin Panel - Devriye Noktaları & QR Kodlar</h1>
+
+  <label>Blok Seç (dropdown):</label>
+  <select id="blockDropdown">
+    <option value="">Seçiniz</option>
+  </select>
+
+  <label>Veya Özel Blok/Site Adı Yaz (opsiyonel):</label>
+  <input type="text" id="blockInput" placeholder="Örn: Meslisa">
+
+  <label>Devriye Noktası Adı:</label>
+  <input type="text" id="pointName" placeholder="Örn: Arka Bahçe">
+
+  <button id="generateQRBtn" style="background:#27ae60; color:#fff;">QR Kod Oluştur & Kaydet</button>
+  
+  <h2>Oluşturulan QR Kodlar</h2>
+  <div id="qrList"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getDatabase, ref, set, remove, serverTimestamp, get, push } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+const BEACON_SERVICE_UUID = 0xffe0;
+
+// 🔹 DOM elemanları
+const blockDropdown = document.getElementById('blockDropdown');
+const blockInput = document.getElementById('blockInput');
+const pointName = document.getElementById('pointName');
+const generateQRBtn = document.getElementById('generateQRBtn');
+const qrList = document.getElementById('qrList');
+const logoutBtn = document.getElementById('logoutBtn');
+
+logoutBtn.addEventListener('click', ()=> { window.location.href = 'mod.html'; });
+
+// 🔹 QR kütüphanesi
+const QR_SCRIPT = document.createElement('script');
+QR_SCRIPT.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+document.body.appendChild(QR_SCRIPT);
+await new Promise(resolve => QR_SCRIPT.onload = resolve); // QR kütüphanesinin yüklenmesini bekle
+
+// 🔹 Merkez Firebase config
+const merkezConfig = {
+     apiKey: "AIzaSyAM5NHBpRHIlttNXwJ9YKDypR4eoyQbDeM",
+  authDomain: "kolartguvenlik-e002d.firebaseapp.com",
+  databaseURL: "https://kolartguvenlik-e002d-default-rtdb.firebaseio.com",
+  projectId: "kolartguvenlik-e002d",
+  storageBucket: "kolartguvenlik-e002d.firebasestorage.app",
+  messagingSenderId: "212955174898",
+  appId: "1:212955174898:web:f77501991c1648fb66bd6b",
+  measurementId: "G-TCGDNDYY6Y"
+};
+const merkezApp = initializeApp(merkezConfig, "merkez");
+const merkezDb = getDatabase(merkezApp);
+
+// 🔹 Seçilen siteyi sessionStorage'dan al
+const selectedSiteId = sessionStorage.getItem("selectedSite");
+if(!selectedSiteId){
+  alert("Lütfen ana panelden bir site seçin!");
+  window.location.href = "index.html";
+  throw new Error("Site seçilmedi");
+}
+
+// 🔹 Site config’i merkezden al
+const siteConfigSnap = await get(ref(merkezDb, "sites/" + selectedSiteId + "/config"));
+if(!siteConfigSnap.exists()){
+  alert("Site config bulunamadı!");
+  window.location.href = "index.html";
+  throw new Error("Site config bulunamadı");
+}
+const siteConfig = siteConfigSnap.val();
+
+// 🔹 Site Firebase DB başlat
+const siteApp = initializeApp(siteConfig, selectedSiteId);
+const db = getDatabase(siteApp);
+
+// 🔹 Güvenli QR ID oluştur
+function createSafeQRId(name){
+  const utf8Name = unescape(encodeURIComponent(name));
+  const base64 = btoa(utf8Name);
+  return base64 + '_' + Date.now();
+}
+
+// 🔹 Blok listesini QRNoktas’tan yükle
+async function loadBlocksFromQRNoktas() {
+  blockDropdown.innerHTML = '<option value="">Seçiniz</option>';
+  const snapshot = await get(ref(db,'qrNoktas/'));
+  const data = snapshot.val();
+  if(!data) return;
+  Object.values(data).forEach(qr => {
+    if(qr.name){
+      if(!Array.from(blockDropdown.options).some(opt => opt.value === qr.name)){
+        const opt = document.createElement('option');
+        opt.value = qr.name;
+        opt.textContent = qr.name + " Blok/Site";
+        blockDropdown.appendChild(opt);
+      }
+    }
+  });
+}
+loadBlocksFromQRNoktas();
+
+// 🔹 QR oluştur ve push
+generateQRBtn.addEventListener('click', async () => {
+  generateQRBtn.disabled = true;
+  const name = pointName.value.trim();
+  let block = blockInput.value.trim() || blockDropdown.value.trim();
+  if(!name){ alert("Devriye noktası adını girin!"); generateQRBtn.disabled=false; return; }
+
+  const qrId = createSafeQRId(name);
+  const qrData = { 
+    name, 
+    qrId, 
+    firma: block ? "CGA " + block + " Devriye" : "CGA", 
+    block: block || '', 
+    timestamp: serverTimestamp() 
+  };
+  const path = block ? block + "qrcodes/" : "qrCodes/";
+
+  if(blockInput.value.trim() && !Array.from(blockDropdown.options).some(opt => opt.value===block)){
+    const newOpt = document.createElement('option');
+    newOpt.value = block;
+    newOpt.textContent = block + " Blok/Site";
+    blockDropdown.appendChild(newOpt);
+  }
+
+  await push(ref(db, path), qrData);
+  pointName.value=''; blockInput.value='';
+  loadQRCodes(block);
+  generateQRBtn.disabled=false;
+});
+
+// 🔹 QR kodları yükle
+async function loadQRCodes(selectedBlock=''){
+  qrList.innerHTML='';
+  let data = null;
+  if(!selectedBlock){
+    const snapshot = await get(ref(db,'qrCodes/'));
+    data = snapshot.val();
+  } else {
+    const path = selectedBlock + "qrcodes/";
+    const snapshot = await get(ref(db, path));
+    data = snapshot.val();
+  }
+  if(data){
+    const sorted = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+    sorted.forEach(addQRToList);
+  }
+}
+
+blockDropdown.addEventListener('change', ()=> loadQRCodes(blockDropdown.value));
+
+// 🔹 Listeye ekleme fonksiyonu
+function addQRToList(qrData){
+  const div = document.createElement('div');
+  const qrDiv = document.createElement('div'); qrDiv.classList.add('qrCodeImg');
+  new QRCode(qrDiv, { text: qrData.qrId, width:300, height:300, correctLevel:QRCode.CorrectLevel.H });
+
+const infoDiv = document.createElement('div'); infoDiv.style.marginLeft='10px';
+const tagInfo = qrData.tagId ? `<br><span style="color:#2ecc71;">🏷️ Tag: ${qrData.tagName || 'Bilinmiyor'}</span>` : `<br><span style="color:#e67e22;">⚠️ Tag Tanımlanmamış</span>`;
+infoDiv.innerHTML=`<strong>${qrData.name}</strong><br>ID: ${qrData.qrId}${tagInfo}<br>Firma: ${qrData.firma}`;
+const tagBtn = document.createElement('button');
+tagBtn.textContent = qrData.tagId ? 'Tag Değiştir' : 'Tag Eşleştir';
+tagBtn.style.background = '#8e44ad'; tagBtn.style.color = '#fff'; tagBtn.style.marginTop = '5px';
+tagBtn.addEventListener('click', () => matchTagToPoint(qrData));
+div.appendChild(tagBtn);
+  const downloadBtn = document.createElement('button');
+  downloadBtn.textContent='İndir';
+  downloadBtn.style.background='#2980b9'; downloadBtn.style.color='#fff';
+downloadBtn.addEventListener('click', () => {
+  const canvas = qrDiv.querySelector('canvas');
+  if (!canvas) return;
+
+  // 🔹 DEVRIYE NOKTASI ADI (ASIL İSTEDİĞİN)
+  const devriyeAdi = qrData.name;
+
+  // 🔹 Yeni canvas
+  const newCanvas = document.createElement('canvas');
+  const ctx = newCanvas.getContext('2d');
+
+  const qrSize = canvas.width;
+  const textHeight = 40;
+
+  newCanvas.width = qrSize;
+  newCanvas.height = qrSize + textHeight;
+
+  // 🔹 Arka plan
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+  // 🔹 QR'yi çiz
+  ctx.drawImage(canvas, 0, 0);
+
+  // 🔹 ALTINA DEVRIYE ADINI YAZ
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 18px Montserrat';
+  ctx.textAlign = 'center';
+  ctx.fillText(devriyeAdi, qrSize / 2, qrSize + 26);
+
+  // 🔹 İndir
+  const a = document.createElement('a');
+  a.href = newCanvas.toDataURL('image/png');
+  a.download = devriyeAdi + '.png';
+  a.click();
+});
+
+
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent='Sil';
+  deleteBtn.style.background='#c0392b'; deleteBtn.style.color='#fff';
+  deleteBtn.addEventListener('click', async ()=> {
+    if(!confirm(`"${qrData.name}" QR kodunu silmek istediğine emin misin?`)) return;
+    let basePath = qrData.block && qrData.block.trim() !== '' ? qrData.block + "qrcodes" : "qrCodes";
+    const qrSnap = await get(ref(db, basePath));
+    const qrObjs = qrSnap.val();
+    if(qrObjs){
+      let keyToDelete = Object.keys(qrObjs).find(k => qrObjs[k].qrId === qrData.qrId);
+      if(keyToDelete){
+        await remove(ref(db, basePath + '/' + keyToDelete));
+        loadQRCodes(blockDropdown.value || blockInput.value.trim() || '');
+      } else { alert("QR kod bulunamadı!"); }
+    }
+  });
+
+  div.appendChild(qrDiv); div.appendChild(infoDiv); div.appendChild(downloadBtn); div.appendChild(deleteBtn);
+  qrList.appendChild(div);
+}
+
+loadQRCodes();
+async function matchTagToPoint(qrData) {
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [BEACON_SERVICE_UUID]
+    });
+
+    const basePath = qrData.block && qrData.block.trim() !== '' ? qrData.block + "qrcodes" : "qrCodes";
+    const qrSnap = await get(ref(db, basePath));
+    const qrObjs = qrSnap.val();
+    
+    if(qrObjs) {
+      let keyToUpdate = Object.keys(qrObjs).find(k => qrObjs[k].qrId === qrData.qrId);
+      if(keyToUpdate) {
+        const updateRef = ref(db, `${basePath}/${keyToUpdate}`);
+        await set(updateRef, {
+          ...qrData,
+          tagId: device.id,
+          tagName: device.name || "İsimsiz iTag"
+        });
+        alert(`Başarılı! "${qrData.name}" noktası "${device.name}" cihazına kilitlendi.`);
+        loadQRCodes(blockDropdown.value || blockInput.value.trim() || '');
+      }
+    }
+  } catch (error) {
+    console.error("Bluetooth hatası:", error);
+    alert("Cihaz seçilmedi.");
+  }
+}
+</script>
+</body>
+</html>
+

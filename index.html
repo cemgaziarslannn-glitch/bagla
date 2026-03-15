@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#020305">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<title>CGA | QR DEVRİYE HAREKÂT MERKEZİ</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="logo.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=JetBrains+Mono:wght@300;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --matrix-green: #00ff41;
+        --deep-green: #003b00;
+        --deep-black: #020305;
+        --scanner-line: rgba(0, 255, 65, 0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        height: 100vh;
+        background-color: var(--deep-black);
+        background-image: 
+            radial-gradient(circle at center, #001500 0%, #000 100%),
+            linear-gradient(rgba(0, 255, 65, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 65, 0.02) 1px, transparent 1px);
+        background-size: 100% 100%, 30px 30px, 30px 30px;
+        display: flex; justify-content: center; align-items: center;
+        font-family: 'JetBrains Mono', monospace;
+        color: #fff;
+        overflow: hidden;
+    }
+
+    /* PWA Yükleme Butonu - Taktiksel Stil */
+    #installBtn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        padding: 8px 15px;
+        background: transparent;
+        border: 1px solid var(--matrix-green);
+        color: var(--matrix-green);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        cursor: pointer;
+        display: none; /* Varsayılan gizli */
+        z-index: 100;
+        box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        transition: 0.3s;
+    }
+    #installBtn:hover {
+        background: var(--matrix-green);
+        color: #000;
+        box-shadow: 0 0 20px var(--matrix-green);
+    }
+
+    .terminal-container {
+        position: relative;
+        width: 460px;
+        padding: 60px 40px;
+        background: rgba(2, 5, 2, 0.95);
+        border: 2px solid #002200;
+        box-shadow: 0 0 100px rgba(0,0,0,1), inset 0 0 20px rgba(0, 255, 65, 0.05);
+        z-index: 10;
+    }
+
+    .terminal-container::before, .terminal-container::after {
+        content: ""; position: absolute; width: 40px; height: 40px;
+        border: 3px solid var(--matrix-green);
+    }
+    .terminal-container::before { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
+    .terminal-container::after { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
+
+    .laser {
+        position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+        background: var(--matrix-green); box-shadow: 0 0 15px var(--matrix-green);
+        animation: scanning 4s linear infinite; opacity: 0.3;
+    }
+    @keyframes scanning { 0% { top: 0; } 100% { top: 100%; } }
+
+    .header { text-align: center; margin-bottom: 45px; }
+    .header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 24px; font-weight: 900; letter-spacing: 8px;
+        color: var(--matrix-green); text-shadow: 0 0 10px var(--matrix-green);
+    }
+    .header p { font-size: 10px; color: #008f11; margin-top: 10px; letter-spacing: 3px; font-weight: bold; }
+
+    .input-wrapper { position: relative; margin-bottom: 25px; }
+    .input-wrapper label {
+        display: block; font-size: 9px; color: var(--matrix-green);
+        margin-bottom: 8px; font-weight: 700; letter-spacing: 2px;
+    }
+
+    input {
+        width: 100%;
+        background: rgba(0, 255, 65, 0.02);
+        border: 1px solid #004400;
+        padding: 15px; color: var(--matrix-green);
+        font-size: 14px; letter-spacing: 2px;
+        outline: none; transition: 0.3s;
+        border-left: 4px solid #004400;
+    }
+
+    input:focus {
+        border-left-color: var(--matrix-green);
+        background: rgba(0, 255, 65, 0.08);
+        box-shadow: -10px 0 20px rgba(0, 255, 65, 0.1);
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 20px;
+        background: transparent;
+        border: 1px solid var(--matrix-green);
+        color: var(--matrix-green);
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 900; font-size: 14px;
+        letter-spacing: 5px; cursor: pointer;
+        transition: 0.4s;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+    }
+
+    .login-btn:hover {
+        background: var(--matrix-green);
+        color: #000;
+        box-shadow: 0 0 30px var(--matrix-green);
+    }
+
+    .status-msg {
+        margin-top: 30px; text-align: center;
+        font-size: 11px; font-weight: 700;
+        min-height: 15px; letter-spacing: 1px;
+    }
+    .error { color: #ff0000; text-shadow: 0 0 5px #ff0000; }
+    .success { color: var(--matrix-green); text-shadow: 0 0 5px var(--matrix-green); }
+
+    .system-info {
+        position: absolute; bottom: 15px; left: 15px; font-size: 8px; color: #004400;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<button id="installBtn">MODÜLÜ YÜKLE [SYS]</button>
+
+<div class="terminal-container">
+    <div class="laser"></div>
+    
+    <div class="header">
+        <h1>CGA PANEL</h1>
+        <p>QR DEVRİYE KONTROL SİSTEMİ</p>
+    </div>
+
+    <div class="input-wrapper">
+        <label>OPERATÖR_KİMLİĞİ</label>
+        <input type="text" id="adminUser" placeholder="KULLANICI ADI GİRİN" autocomplete="off">
+    </div>
+
+    <div class="input-wrapper">
+        <label>GÜVENLİK_ANAHTARI</label>
+        <input type="password" id="adminPass" placeholder="ŞİFREYİ GİRİN">
+    </div>
+
+    <button class="login-btn" id="loginBtn">SİSTEMİ BAŞLAT</button>
+
+    <div id="status" class="status-msg">SİSTEM HAZIR</div>
+
+    <div class="system-info">ŞİFRELEME: AES-256 // PROTOKOL: CGA-GÜVENLİ</div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBWu01alJKdnEvhs_bumDCxgGO9m-BX5Y0",
+        authDomain: "merkezprojecga.firebaseapp.com",
+        databaseURL: "https://merkezprojecga-default-rtdb.firebaseio.com",
+        projectId: "merkezprojecga",
+        storageBucket: "merkezprojecga.firebasestorage.app",
+        messagingSenderId: "4183440370",
+        appId: "1:4183440370:web:c83e65bbc6c1724a3a896b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const loginBtn = document.getElementById("loginBtn");
+    const statusMsg = document.getElementById("status");
+    const installBtn = document.getElementById('installBtn');
+
+    // --- PWA MANTIĞI ---
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'block'; // Kurulum hazırsa butonu göster
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if(deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if(outcome === 'accepted') console.log('Sistem yüklendi.');
+            deferredPrompt = null;
+            installBtn.style.display = 'none';
+        }
+    });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log("SW Error"));
+        });
+    }
+    // -------------------
+
+    loginBtn.onclick = async () => {
+        const u = document.getElementById("adminUser").value.trim().toUpperCase();
+        const p = document.getElementById("adminPass").value.trim().toUpperCase();
+
+        if(!u || !p) {
+            statusMsg.innerText = "!! VERİ GİRİŞİ GEREKLİ !!";
+            statusMsg.className = "status-msg error";
+            return;
+        }
+
+        loginBtn.innerText = "KİMLİK DOĞRULANIYOR...";
+        loginBtn.disabled = true;
+
+        try {
+            const snap = await get(ref(db, "admin"));
+            const admin = snap.val();
+
+            if(u === admin.username && p === admin.password) {
+                statusMsg.innerText = ">> ERİŞİM ONAYLANDI <<";
+                statusMsg.className = "status-msg success";
+                sessionStorage.setItem("adminAuth", "true");
+                setTimeout(() => window.location.href = "mod.html", 1000);
+            } else {
+                statusMsg.innerText = "!! YETKİSİZ ERİŞİM: REDDEDİLDİ !!";
+                statusMsg.className = "status-msg error";
+                loginBtn.innerText = "SİSTEMİ BAŞLAT";
+                loginBtn.disabled = false;
+            }
+        } catch(e) {
+            statusMsg.innerText = "!! BAĞLANTI HATASI !!";
+            statusMsg.className = "status-msg error";
+            loginBtn.disabled = false;
+        }
+    };
+</script>
+
+</body>
+</html>
