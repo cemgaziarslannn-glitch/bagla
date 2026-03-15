@@ -274,10 +274,20 @@ downloadBtn.addEventListener('click', () => {
 loadQRCodes();
 async function matchTagToPoint(qrData) {
   try {
+    // 1. Cihazı seçtiriyoruz (iTag servisi olan 0xffe0'ı özellikle istiyoruz)
     const device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
+      filters: [{ services: [BEACON_SERVICE_UUID] }],
       optionalServices: [BEACON_SERVICE_UUID]
     });
+
+    // 2. Cihazın içine bağlanıp gerçek servis listesini alıyoruz
+    const server = await device.gatt.connect();
+    const services = await server.getPrimaryServices();
+    
+    // 3. Cihazın içindeki iTag servisini (ffe0) bulup onun tam UUID'sini alıyoruz
+    // Bu değer tüm telefonlarda AYNI görünür.
+    const iTagService = services.find(s => s.uuid.includes('ffe0'));
+    const uniqueTagId = iTagService ? iTagService.uuid : BEACON_SERVICE_UUID.toString();
 
     const basePath = qrData.block && qrData.block.trim() !== '' ? qrData.block + "qrcodes" : "qrCodes";
     const qrSnap = await get(ref(db, basePath));
@@ -287,18 +297,25 @@ async function matchTagToPoint(qrData) {
       let keyToUpdate = Object.keys(qrObjs).find(k => qrObjs[k].qrId === qrData.qrId);
       if(keyToUpdate) {
         const updateRef = ref(db, `${basePath}/${keyToUpdate}`);
+        
+        // --- BURASI KRİTİK: Artık device.id DEĞİL, uniqueTagId kaydediyoruz ---
         await set(updateRef, {
           ...qrData,
-          tagId: device.id,
+          tagId: uniqueTagId, 
           tagName: device.name || "İsimsiz iTag"
         });
-        alert(`Başarılı! "${qrData.name}" noktası "${device.name}" cihazına kilitlendi.`);
+        
+        alert(`Başarılı! "${qrData.name}" noktası "${device.name}" cihazına (Sabit UUID: ${uniqueTagId}) kilitlendi.`);
+        
+        // Bağlantıyı kes
+        device.gatt.disconnect();
+        
         loadQRCodes(blockDropdown.value || blockInput.value.trim() || '');
       }
     }
   } catch (error) {
     console.error("Bluetooth hatası:", error);
-    alert("Cihaz seçilmedi.");
+    alert("Hata: Cihaz seçilmedi veya cihazın servisleri okunamadı.");
   }
 }
 </script>
